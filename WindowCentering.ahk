@@ -61,3 +61,23 @@ CenterX := MonitorWorkAreaLeft + (MonitorWorkAreaRight - MonitorWorkAreaLeft - W
 BottomY := MonitorWorkAreaBottom - Height  ; Align to the bottom of the work area
 WinMove, A,, %CenterX%, %BottomY%
 return
+
+; Center window vertically and align to left of monitor
+^!l::  ; Ctrl+Alt+L hotkey
+WinGetPos, X, Y, Width, Height, A
+ActiveMonitor := GetActiveMonitor(X, Y)
+SysGet, MonitorWorkArea, MonitorWorkArea, %ActiveMonitor%
+LeftX := MonitorWorkAreaLeft  ; Align to the left of the work area
+CenterY := MonitorWorkAreaTop + (MonitorWorkAreaBottom - MonitorWorkAreaTop - Height) / 2
+WinMove, A,, %LeftX%, %CenterY%
+return
+
+; Center window vertically and align to right of monitor
+^!r::  ; Ctrl+Alt+R hotkey
+WinGetPos, X, Y, Width, Height, A
+ActiveMonitor := GetActiveMonitor(X, Y)
+SysGet, MonitorWorkArea, MonitorWorkArea, %ActiveMonitor%
+RightX := MonitorWorkAreaRight - Width  ; Align to the right of the work area
+CenterY := MonitorWorkAreaTop + (MonitorWorkAreaBottom - MonitorWorkAreaTop - Height) / 2
+WinMove, A,, %RightX%, %CenterY%
+return
