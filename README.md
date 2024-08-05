@@ -9,3 +9,7 @@ This AutoHotkey (AHK) script provides hotkeys for centering and aligning windows
 - `Ctrl + Alt + V`: Center window vertically only
 - `Ctrl + Alt + T`: Center window horizontally and align to top of monitor
 - `Ctrl + Alt + B`: Center window horizontally and align to bottom of monitor
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
