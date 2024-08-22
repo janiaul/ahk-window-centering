@@ -22,7 +22,6 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
         MsgBox("The specified window does not exist.", "Error", 16)
         return
     }
-
     try {
         if (W = "" and H = "") {
             WinMove(X, Y, , , WinTitle)
@@ -42,11 +41,16 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
     }
 }
 
+GetTaskbarHeight() {
+    taskbar := WinGetPos("ahk_class Shell_TrayWnd")
+    return taskbar.H
+}
+
 ; Center window horizontally and vertically
 ^!c:: {  ; Ctrl+Alt+C hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     CenterX := Left + (Right - Left - WinW) // 2
     CenterY := Top + (Bottom - Top - WinH) // 2
     MoveWindowSafely(CenterX, CenterY)
@@ -56,7 +60,7 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
 ^!h:: {  ; Ctrl+Alt+H hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     CenterX := Left + (Right - Left - WinW) // 2
     MoveWindowSafely(CenterX, WinY)
 }
@@ -65,7 +69,7 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
 ^!v:: {  ; Ctrl+Alt+V hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     CenterY := Top + (Bottom - Top - WinH) // 2
     MoveWindowSafely(WinX, CenterY)
 }
@@ -74,7 +78,7 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
 ^!t:: {  ; Ctrl+Alt+T hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     CenterX := Left + (Right - Left - WinW) // 2
     MoveWindowSafely(CenterX, Top)
 }
@@ -83,7 +87,7 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
 ^!b:: {  ; Ctrl+Alt+B hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     CenterX := Left + (Right - Left - WinW) // 2
     BottomY := Bottom - WinH
     MoveWindowSafely(CenterX, BottomY)
@@ -93,7 +97,7 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
 ^!l:: {  ; Ctrl+Alt+L hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     CenterY := Top + (Bottom - Top - WinH) // 2
     MoveWindowSafely(Left, CenterY)
 }
@@ -102,7 +106,7 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
 ^!r:: {  ; Ctrl+Alt+R hotkey
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
     ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGet(ActiveMonitor, &Left, &Top, &Right, &Bottom)
+    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
     RightX := Right - WinW
     CenterY := Top + (Bottom - Top - WinH) // 2
     MoveWindowSafely(RightX, CenterY)
