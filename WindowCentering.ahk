@@ -2,6 +2,7 @@
 #SingleInstance Force
 #NoTrayIcon
 
+; Determine which monitor a window is on based on its coordinates
 GetActiveMonitor(X, Y) {
     MonitorCount := MonitorGetCount()
     Loop MonitorCount {
@@ -13,10 +14,12 @@ GetActiveMonitor(X, Y) {
     return 1  ; Default to primary monitor if not found
 }
 
+; Check if a window with the given title exists
 WindowExists(WinTitle := "A") {
     return WinExist(WinTitle) != 0
 }
 
+; Safely move a window, handling potential errors
 MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
     if (!WindowExists(WinTitle)) {
         MsgBox("The specified window does not exist.", "Error", 16)
@@ -41,73 +44,151 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
     }
 }
 
+; Get the height of the taskbar, accounting for display scaling
 GetTaskbarHeight() {
-    taskbar := WinGetPos("ahk_class Shell_TrayWnd")
-    return taskbar.H
+    ; Try to get the taskbar window
+    if (taskbar := WinExist("ahk_class Shell_TrayWnd")) {
+        WinGetPos(&Left, &Top, &Width, &Height, taskbar)
+        return Height
+    }
+    
+    ; If taskbar window not found, estimate based on primary monitor resolution and scaling
+    MonitorGetWorkArea(MonitorGetPrimary(), &Left, &Top, &Right, &Bottom)
+    
+    ; Get the display DPI scaling
+    hDC := DllCall("GetDC", "Ptr", 0)
+    dpi := DllCall("GetDeviceCaps", "Ptr", hDC, "Int", 88)  ; LOGPIXELSX
+    DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
+    scaleFactor := dpi / 96  ; 96 is the base DPI
+    
+    ; Base taskbar height is 48 pixels at 100% scaling
+    baseHeight := 48
+    
+    ; Adjust height based on scaling factor
+    return Round(baseHeight * scaleFactor)
+}
+
+; Check if the given monitor is the primary monitor
+IsPrimaryMonitor(MonitorIndex) {
+    MonitorInfo := MonitorGetPrimary()
+    return MonitorIndex = MonitorInfo
+}
+
+; Check if SmartTaskbar is running
+IsSmartTaskbarRunning() {
+    return ProcessExist("SmartTaskbar.exe")
+}
+
+; Get the adjusted work area for a monitor, accounting for SmartTaskbar if running
+GetAdjustedWorkArea(MonitorIndex) {
+    MonitorGetWorkArea(MonitorIndex, &Left, &Top, &Right, &Bottom)
+    if (IsPrimaryMonitor(MonitorIndex) && IsSmartTaskbarRunning()) {
+        TaskbarHeight := GetTaskbarHeight()
+        Bottom -= TaskbarHeight
+    }
+    return [Left, Top, Right, Bottom]
+}
+
+; Get information about the currently focused window
+GetFocusedWindowInfo() {
+    if (!WindowExists("A")) {
+        throw Error("No active window found.")
+    }
+    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
+    return {X: WinX, Y: WinY, W: WinW, H: WinH}
 }
 
 ; Center window horizontally and vertically
-^!c:: {  ; Ctrl+Alt+C hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    CenterX := Left + (Right - Left - WinW) // 2
-    CenterY := Top + (Bottom - Top - WinH) // 2
-    MoveWindowSafely(CenterX, CenterY)
+^!c:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        CenterX := WorkArea[1] + (WorkArea[3] - WorkArea[1] - WinInfo.W) // 2
+        CenterY := WorkArea[2] + (WorkArea[4] - WorkArea[2] - WinInfo.H) // 2
+        MoveWindowSafely(CenterX, CenterY)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
 
 ; Center window horizontally only
-^!h:: {  ; Ctrl+Alt+H hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    CenterX := Left + (Right - Left - WinW) // 2
-    MoveWindowSafely(CenterX, WinY)
+^!h:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        CenterX := WorkArea[1] + (WorkArea[3] - WorkArea[1] - WinInfo.W) // 2
+        MoveWindowSafely(CenterX, WinInfo.Y)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
 
 ; Center window vertically only
-^!v:: {  ; Ctrl+Alt+V hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    CenterY := Top + (Bottom - Top - WinH) // 2
-    MoveWindowSafely(WinX, CenterY)
+^!v:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        CenterY := WorkArea[2] + (WorkArea[4] - WorkArea[2] - WinInfo.H) // 2
+        MoveWindowSafely(WinInfo.X, CenterY)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
 
 ; Center window horizontally and align to top of monitor
-^!t:: {  ; Ctrl+Alt+T hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    CenterX := Left + (Right - Left - WinW) // 2
-    MoveWindowSafely(CenterX, Top)
+^!t:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        CenterX := WorkArea[1] + (WorkArea[3] - WorkArea[1] - WinInfo.W) // 2
+        TopY := WorkArea[2]
+        MoveWindowSafely(CenterX, TopY)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
 
 ; Center window horizontally and align to bottom of monitor
-^!b:: {  ; Ctrl+Alt+B hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    CenterX := Left + (Right - Left - WinW) // 2
-    BottomY := Bottom - WinH
-    MoveWindowSafely(CenterX, BottomY)
+^!b:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        CenterX := WorkArea[1] + (WorkArea[3] - WorkArea[1] - WinInfo.W) // 2
+        BottomY := WorkArea[4] - WinInfo.H
+        MoveWindowSafely(CenterX, BottomY)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
 
 ; Center window vertically and align to left of monitor
-^!l:: {  ; Ctrl+Alt+L hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    CenterY := Top + (Bottom - Top - WinH) // 2
-    MoveWindowSafely(Left, CenterY)
+^!l:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        CenterY := WorkArea[2] + (WorkArea[4] - WorkArea[2] - WinInfo.H) // 2
+        MoveWindowSafely(WorkArea[1], CenterY)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
 
 ; Center window vertically and align to right of monitor
-^!r:: {  ; Ctrl+Alt+R hotkey
-    WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    ActiveMonitor := GetActiveMonitor(WinX, WinY)
-    MonitorGetWorkArea(ActiveMonitor, &Left, &Top, &Right, &Bottom)
-    RightX := Right - WinW
-    CenterY := Top + (Bottom - Top - WinH) // 2
-    MoveWindowSafely(RightX, CenterY)
+^!r:: {
+    try {
+        WinInfo := GetFocusedWindowInfo()
+        ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y)
+        WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        RightX := WorkArea[3] - WinInfo.W
+        CenterY := WorkArea[2] + (WorkArea[4] - WorkArea[2] - WinInfo.H) // 2
+        MoveWindowSafely(RightX, CenterY)
+    } catch as err {
+        MsgBox("Error: " . err.Message, "Window Centering Error", 16)
+    }
 }
