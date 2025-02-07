@@ -3,15 +3,24 @@
 #NoTrayIcon
 
 ; Determine which monitor a window is on based on its coordinates
-GetActiveMonitor(X, Y) {
+GetActiveMonitor(X, Y, W := 0, H := 0) {
+    PrimaryMonitor := MonitorGetPrimary()
     MonitorCount := MonitorGetCount()
-    Loop MonitorCount {
-        MonitorGet(A_Index, &Left, &Top, &Right, &Bottom)
-        if (X >= Left && X < Right && Y >= Top && Y < Bottom) {
+
+    ; First check primary monitor to ensure correct identification
+    MonitorGetWorkArea(PrimaryMonitor, &Left, &Top, &Right, &Bottom)
+    if (X >= Left && X < Right && Y >= Top && Y < Bottom)
+        return PrimaryMonitor
+
+    ; Then check other monitors
+    loop MonitorCount {
+        if (A_Index = PrimaryMonitor)
+            continue
+        MonitorGetWorkArea(A_Index, &Left, &Top, &Right, &Bottom)
+        if (X >= Left && X < Right && Y >= Top && Y < Bottom)
             return A_Index
-        }
     }
-    return 1  ; Default to primary monitor if not found
+    return PrimaryMonitor
 }
 
 ; Check if a window with the given title exists
@@ -37,7 +46,8 @@ MoveWindowSafely(X, Y, W := "", H := "", WinTitle := "A") {
         }
     } catch as err {
         if (InStr(err.Message, "Access is denied")) {
-            MsgBox("Unable to move this window due to system restrictions. Try running the script as administrator.", "Access Denied", 48)
+            MsgBox("Unable to move this window due to system restrictions. Try running the script as administrator.",
+                "Access Denied", 48)
         } else {
             MsgBox("An unexpected error occurred: " . err.Message, "Error", 16)
         }
@@ -51,19 +61,18 @@ GetTaskbarHeight() {
         WinGetPos(&Left, &Top, &Width, &Height, taskbar)
         return Height
     }
-    
     ; If taskbar window not found, estimate based on primary monitor resolution and scaling
     MonitorGetWorkArea(MonitorGetPrimary(), &Left, &Top, &Right, &Bottom)
-    
+
     ; Get the display DPI scaling
     hDC := DllCall("GetDC", "Ptr", 0)
     dpi := DllCall("GetDeviceCaps", "Ptr", hDC, "Int", 88)  ; LOGPIXELSX
     DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
     scaleFactor := dpi / 96  ; 96 is the base DPI
-    
+
     ; Base taskbar height is 48 pixels at 100% scaling
     baseHeight := 48
-    
+
     ; Adjust height based on scaling factor
     return Round(baseHeight * scaleFactor)
 }
@@ -79,13 +88,35 @@ IsSmartTaskbarRunning() {
     return ProcessExist("SmartTaskbar.exe")
 }
 
+; Check if any window on the specified monitor is maximized
+IsWindowMaximized(MonitorIndex) {
+    DetectHiddenWindows(false)
+    windows := WinGetList()
+
+    for window in windows {
+        try {
+            title := WinGetTitle("ahk_id " . window)
+            state := WinGetMinMax("ahk_id " . window)
+            WinGetPos(&wx, &wy, &ww, &wh, "ahk_id " . window)
+            monitor := GetActiveMonitor(wx, wy)
+
+            if (monitor = MonitorIndex && state = 1)
+                return true
+        } catch Error {
+            continue
+        }
+    }
+    return false
+}
+
 ; Get the adjusted work area for a monitor, accounting for SmartTaskbar if running
 GetAdjustedWorkArea(MonitorIndex) {
     MonitorGetWorkArea(MonitorIndex, &Left, &Top, &Right, &Bottom)
-    if (IsPrimaryMonitor(MonitorIndex) && IsSmartTaskbarRunning()) {
-        TaskbarHeight := GetTaskbarHeight()
-        Bottom -= TaskbarHeight
-    }
+    PrimaryMonitor := MonitorGetPrimary()
+
+    if (MonitorIndex = PrimaryMonitor && IsSmartTaskbarRunning() && !IsWindowMaximized(PrimaryMonitor))
+        Bottom -= GetTaskbarHeight()
+
     return [Left, Top, Right, Bottom]
 }
 
@@ -95,7 +126,7 @@ GetFocusedWindowInfo() {
         throw Error("No active window found.")
     }
     WinGetPos(&WinX, &WinY, &WinW, &WinH, "A")
-    return {X: WinX, Y: WinY, W: WinW, H: WinH}
+    return { X: WinX, Y: WinY, W: WinW, H: WinH }
 }
 
 ; Center window horizontally and vertically
