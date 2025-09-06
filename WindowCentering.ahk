@@ -105,34 +105,28 @@ GetWindowFrameSize(WinTitle := "A") {
 }
 
 ; Enhanced window moving function that accounts for window frames
-MoveWindowSafelyEnhanced(X, Y, W := "", H := "", WinTitle := "A", ForceToTaskbar := false) {
+MoveWindowSafelyEnhanced(X, Y, W := "", H := "", WinTitle := "A", ForceToBottom := false) {
     if (!WindowExists(WinTitle)) {
         MsgBox("The specified window does not exist.", "Error", 16)
         return
     }
-
     try {
         ; Get window frame information for more accurate positioning
         FrameSize := GetWindowFrameSize(WinTitle)
-
-        ; If ForceToTaskbar is true, adjust the Y position to account for potential app-specific margins
-        if (ForceToTaskbar) {
+        ; If ForceToBottom is true, adjust the Y position to account for potential app-specific margins
+        if (ForceToBottom) {
             ; Get current window info
             WinGetPos(&CurX, &CurY, &CurW, &CurH, WinTitle)
             ActiveMonitor := GetActiveMonitor(CurX, CurY, CurW, CurH, WinTitle)
             WorkArea := GetAdjustedWorkArea(ActiveMonitor)
-
             ; Calculate the absolute bottom position (taskbar top) minus the gap
             AbsoluteBottom := WorkArea[4] - TASKBAR_GAP
-
             ; Try to position the window so its bottom edge is TASKBAR_GAP pixels above the taskbar
             ; Account for window frame
             AdjustedY := AbsoluteBottom - CurH + FrameSize.Bottom
-
             ; Use the adjusted Y position
             Y := AdjustedY
         }
-
         if (W = "" and H = "") {
             WinMove(X, Y, , , WinTitle)
         } else if (W = "") {
@@ -142,13 +136,11 @@ MoveWindowSafelyEnhanced(X, Y, W := "", H := "", WinTitle := "A", ForceToTaskbar
         } else {
             WinMove(X, Y, W, H, WinTitle)
         }
-
         ; Verify position and make final adjustment if needed for bottom snapping
-        if (ForceToTaskbar) {
+        if (ForceToBottom) {
             Sleep(10)  ; Small delay to ensure the move completed
             WinGetPos(&NewX, &NewY, &NewW, &NewH, WinTitle)
             WorkArea := GetAdjustedWorkArea(GetActiveMonitor(NewX, NewY, NewW, NewH, WinTitle))
-
             ; If window still isn't at the correct position, try one more adjustment
             ExpectedBottom := WorkArea[4] - TASKBAR_GAP
             if (NewY + NewH < ExpectedBottom - 5) {  ; 5 pixel tolerance
@@ -156,7 +148,6 @@ MoveWindowSafelyEnhanced(X, Y, W := "", H := "", WinTitle := "A", ForceToTaskbar
                 WinMove(NewX, FinalY, , , WinTitle)
             }
         }
-
     } catch as err {
         if (InStr(err.Message, "Access is denied")) {
             MsgBox("Unable to move this window due to system restrictions. Try running the script as administrator.",
@@ -330,8 +321,14 @@ GetFocusedWindowInfo() {
         WinInfo := GetFocusedWindowInfo()
         ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y, WinInfo.W, WinInfo.H, "A")
         WorkArea := GetAdjustedWorkArea(ActiveMonitor)
+        ; Get the window's frame size
+        FrameSize := GetWindowFrameSize("A")
+        ; Subtract the left frame size from the X-position
+        LeftX := WorkArea[1] - FrameSize.Left
+        ; Center the window vertically
         CenterY := WorkArea[2] + (WorkArea[4] - WorkArea[2] - WinInfo.H) // 2
-        MoveWindowSafely(WorkArea[1], CenterY)
+        ; Use enhanced function, but do NOT force to bottom
+        MoveWindowSafelyEnhanced(LeftX, CenterY, "", "", "A", false)
     } catch as err {
         MsgBox("Error: " . err.Message, "Window Positioning Error", 16)
     }
@@ -344,9 +341,14 @@ GetFocusedWindowInfo() {
         WinInfo := GetFocusedWindowInfo()
         ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y, WinInfo.W, WinInfo.H, "A")
         WorkArea := GetAdjustedWorkArea(ActiveMonitor)
-        RightX := WorkArea[3] - WinInfo.W
+        ; Get the window's frame size
+        FrameSize := GetWindowFrameSize("A")
+        ; Add the right frame size to the X-position
+        RightX := WorkArea[3] - WinInfo.W + FrameSize.Right
+        ; Center the window vertically
         CenterY := WorkArea[2] + (WorkArea[4] - WorkArea[2] - WinInfo.H) // 2
-        MoveWindowSafely(RightX, CenterY)
+        ; Use enhanced function, but do NOT force to bottom
+        MoveWindowSafelyEnhanced(RightX, CenterY, "", "", "A", false)
     } catch as err {
         MsgBox("Error: " . err.Message, "Window Positioning Error", 16)
     }
@@ -389,7 +391,13 @@ GetFocusedWindowInfo() {
         WinInfo := GetFocusedWindowInfo()
         ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y, WinInfo.W, WinInfo.H, "A")
         WorkArea := GetAdjustedWorkArea(ActiveMonitor)
-        MoveWindowSafely(WorkArea[1], WorkArea[2])
+        ; Get the window's frame size
+        FrameSize := GetWindowFrameSize("A")
+        ; Subtract the left frame size from the X-position
+        LeftX := WorkArea[1] - FrameSize.Left
+        ; Use the top Y-position
+        TopY := WorkArea[2]
+        MoveWindowSafelyEnhanced(LeftX, TopY, "", "", "A", false)
     } catch as err {
         MsgBox("Error: " . err.Message, "Window Positioning Error", 16)
     }
@@ -402,8 +410,13 @@ GetFocusedWindowInfo() {
         WinInfo := GetFocusedWindowInfo()
         ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y, WinInfo.W, WinInfo.H, "A")
         WorkArea := GetAdjustedWorkArea(ActiveMonitor)
-        RightX := WorkArea[3] - WinInfo.W
-        MoveWindowSafely(RightX, WorkArea[2])
+        ; Get the window's frame size
+        FrameSize := GetWindowFrameSize("A")
+        ; Add the right frame size to the X-position
+        RightX := WorkArea[3] - WinInfo.W + FrameSize.Right
+        ; Use the top Y-position
+        TopY := WorkArea[2]
+        MoveWindowSafelyEnhanced(RightX, TopY, "", "", "A", false)
     } catch as err {
         MsgBox("Error: " . err.Message, "Window Positioning Error", 16)
     }
@@ -416,8 +429,12 @@ GetFocusedWindowInfo() {
         WinInfo := GetFocusedWindowInfo()
         ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y, WinInfo.W, WinInfo.H, "A")
         WorkArea := GetAdjustedWorkArea(ActiveMonitor)
-        ; Use enhanced function for better bottom alignment
-        MoveWindowSafelyEnhanced(WorkArea[1], 0, "", "", "A", true)
+        ; Get the window's frame size
+        FrameSize := GetWindowFrameSize("A")
+        ; Subtract the left frame size from the X-position
+        LeftX := WorkArea[1] - FrameSize.Left
+        ; Force the window to the bottom
+        MoveWindowSafelyEnhanced(LeftX, 0, "", "", "A", true)
     } catch as err {
         MsgBox("Error: " . err.Message, "Window Positioning Error", 16)
     }
@@ -430,8 +447,11 @@ GetFocusedWindowInfo() {
         WinInfo := GetFocusedWindowInfo()
         ActiveMonitor := GetActiveMonitor(WinInfo.X, WinInfo.Y, WinInfo.W, WinInfo.H, "A")
         WorkArea := GetAdjustedWorkArea(ActiveMonitor)
-        RightX := WorkArea[3] - WinInfo.W
-        ; Use enhanced function for better bottom alignment
+        ; Get the window's frame size
+        FrameSize := GetWindowFrameSize("A")
+        ; Add the right frame size to the X-position
+        RightX := WorkArea[3] - WinInfo.W + FrameSize.Right
+        ; Force the window to the bottom
         MoveWindowSafelyEnhanced(RightX, 0, "", "", "A", true)
     } catch as err {
         MsgBox("Error: " . err.Message, "Window Positioning Error", 16)
