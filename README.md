@@ -17,17 +17,17 @@ This AutoHotkey v2 script provides comprehensive window positioning and alignmen
 ## Hotkeys
 
 ### Basic Positioning
-- `Ctrl + Win + S`: **Center** - Center window horizontally and vertically
-- `Ctrl + Win + W`: **Top** - Center horizontally, align to top
-- `Ctrl + Win + X`: **Bottom** - Center horizontally, align to bottom (with taskbar gap)
-- `Ctrl + Win + A`: **Left** - Center vertically, align to left
-- `Ctrl + Win + D`: **Right** - Center vertically, align to right
+- `Ctrl + Shift + Win + S`: **Center** - Center window horizontally and vertically
+- `Ctrl + Shift + Win + W`: **Top** - Center horizontally, align to top
+- `Ctrl + Shift + Win + X`: **Bottom** - Center horizontally, align to bottom (with taskbar gap)
+- `Ctrl + Shift + Win + A`: **Left** - Center vertically, align to left
+- `Ctrl + Shift + Win + D`: **Right** - Center vertically, align to right
 
 ### Corner Positioning
-- `Ctrl + Win + Q`: **Top-left** corner
-- `Ctrl + Win + E`: **Top-right** corner
-- `Ctrl + Win + Z`: **Bottom-left** corner (with taskbar gap)
-- `Ctrl + Win + C`: **Bottom-right** corner (with taskbar gap)
+- `Ctrl + Shift + Win + Q`: **Top-left** corner
+- `Ctrl + Shift + Win + E`: **Top-right** corner
+- `Ctrl + Shift + Win + Z`: **Bottom-left** corner (with taskbar gap)
+- `Ctrl + Shift + Win + C`: **Bottom-right** corner (with taskbar gap)
 
 ## Smart Taskbar Integration
 

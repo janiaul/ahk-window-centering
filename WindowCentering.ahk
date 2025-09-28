@@ -300,7 +300,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Center window horizontally and vertically
-^#s:: ; CTRL+WIN+S
+^+#s:: ; Ctrl+Shift+Win+S
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -315,7 +315,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Snap left (center vertically, align to left)
-^#a:: ; CTRL+WIN+A
+^+#a:: ; Ctrl+Shift+Win+A
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -335,7 +335,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Snap right (center vertically, align to right)
-^#d:: ; CTRL+WIN+D
+^+#d:: ; Ctrl+Shift+Win+D
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -355,7 +355,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Snap top (center horizontally, align to top)
-^#w:: ; CTRL+WIN+W
+^+#w:: ; Ctrl+Shift+Win+W
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -370,7 +370,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Enhanced snap bottom (center horizontally, align to bottom) - IMPROVED VERSION
-^#x:: ; CTRL+WIN+X
+^+#x:: ; Ctrl+Shift+Win+X
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -385,7 +385,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Top-left corner
-^#q:: ; CTRL+WIN+Q
+^+#q:: ; Ctrl+Shift+Win+Q
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -404,7 +404,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Top-right corner
-^#e:: ; CTRL+WIN+E
+^+#e:: ; Ctrl+Shift+Win+E
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -423,7 +423,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Enhanced bottom-left corner
-^#z:: ; CTRL+WIN+Z
+^+#z:: ; Ctrl+Shift+Win+Z
 {
     try {
         WinInfo := GetFocusedWindowInfo()
@@ -441,7 +441,7 @@ GetFocusedWindowInfo() {
 }
 
 ; Enhanced bottom-right corner
-^#c:: ; CTRL+WIN+C
+^+#c:: ; Ctrl+Shift+Win+C
 {
     try {
         WinInfo := GetFocusedWindowInfo()
